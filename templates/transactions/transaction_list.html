@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Transactions - Personal Finance Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Transactions</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'transaction_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add Transaction
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Income</h5>
+                <h3 class="text-success">${{ income_total|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Expenses</h5>
+                <h3 class="text-danger">${{ expense_total|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Balance</h5>
+                <h3 class="{% if balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ${{ balance|floatformat:2 }}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Filters</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Time Period</label>
+                <select name="date_filter" class="form-select">
+                    <option value="week" {% if date_filter == 'week' %}selected{% endif %}>This Week</option>
+                    <option value="month" {% if date_filter == 'month' %}selected{% endif %}>This Month</option>
+                    <option value="year" {% if date_filter == 'year' %}selected{% endif %}>This Year</option>
+                    <option value="all" {% if date_filter == 'all' %}selected{% endif %}>All Time</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Transaction Type</label>
+                <select name="type" class="form-select">
+                    <option value="">All Types</option>
+                    <option value="income" {% if transaction_type == 'income' %}selected{% endif %}>Income</option>
+                    <option value="expense" {% if transaction_type == 'expense' %}selected{% endif %}>Expense</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% if transaction_type == 'income' or not transaction_type %}
+                        <optgroup label="Income Sources">
+                            {% for source in income_sources %}
+                                <option value="{{ source.id }}" {% if category_id == source.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ source.name }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                    {% if transaction_type == 'expense' or not transaction_type %}
+                        <optgroup label="Expense Categories">
+                            {% for category in expense_categories %}
+                                <option value="{{ category.id }}" {% if category_id == category.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Transaction List</h5>
+    </div>
+    <div class="card-body">
+        {% if transactions %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.date }}</td>
+                                <td>{{ transaction.description|truncatechars:30 }}</td>
+                                <td>
+                                    {% if transaction.transaction_type == 'income' %}
+                                        {{ transaction.income_source.name }}
+                                    {% else %}
+                                        {{ transaction.expense_category.name }}
+                                    {% endif %}
+                                </td>
+                                <td>${{ transaction.amount|floatformat:2 }}</td>
+                                <td>
+                                    {% if transaction.transaction_type == 'income' %}
+                                        <span class="badge bg-success">Income</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Expense</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'transaction_edit' transaction.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'transaction_delete' transaction.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <p class="mb-3 text-muted">No transactions found matching your filters.</p>
+                <a href="{% url 'transaction_create' %}" class="btn btn-primary">Add Your First Transaction</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the type select element
+        const typeSelect = document.querySelector('select[name="type"]');
+        const categorySelect = document.querySelector('select[name="category"]');
+        
+        // Add event listener to the type select
+        typeSelect.addEventListener('change', function() {
+            // Get all category options
+            const incomeOptions = categorySelect.querySelector('optgroup[label="Income Sources"]');
+            const expenseOptions = categorySelect.querySelector('optgroup[label="Expense Categories"]');
+            
+            // Show/hide options based on the selected type
+            if (this.value === 'income') {
+                if (incomeOptions) incomeOptions.style.display = 'block';
+                if (expenseOptions) expenseOptions.style.display = 'none';
+            } else if (this.value === 'expense') {
+                if (incomeOptions) incomeOptions.style.display = 'none';
+                if (expenseOptions) expenseOptions.style.display = 'block';
+            } else {
+                if (incomeOptions) incomeOptions.style.display = 'block';
+                if (expenseOptions) expenseOptions.style.display = 'block';
+            }
+            
+            // Reset the category selection
+            categorySelect.value = '';
+        });
+    });
+</script>
+{% endblock %} 

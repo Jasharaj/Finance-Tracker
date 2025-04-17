@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if transaction %}Edit Transaction{% else %}Add Transaction{% endif %} - Personal Finance Tracker
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>{% if transaction %}Edit Transaction{% else %}Add Transaction{% endif %}</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="{{ form.transaction_type.id_for_label }}" class="form-label">Transaction Type</label>
+                    {{ form.transaction_type }}
+                    {% if form.transaction_type.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.transaction_type.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.amount.id_for_label }}" class="form-label">Amount</label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.amount.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
+                    {{ form.date }}
+                    {% if form.date.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.date.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6" id="income_source_container">
+                    <label for="{{ form.income_source.id_for_label }}" class="form-label">Income Source</label>
+                    {{ form.income_source }}
+                    {% if form.income_source.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.income_source.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="mt-1">
+                        <a href="{% url 'income_source_create' %}" target="_blank">+ Add New Income Source</a>
+                    </div>
+                </div>
+                <div class="col-md-6" id="expense_category_container">
+                    <label for="{{ form.expense_category.id_for_label }}" class="form-label">Expense Category</label>
+                    {{ form.expense_category }}
+                    {% if form.expense_category.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.expense_category.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="mt-1">
+                        <a href="{% url 'expense_category_create' %}" target="_blank">+ Add New Expense Category</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.description.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.receipt.id_for_label }}" class="form-label">Receipt (Optional)</label>
+                {% if transaction and transaction.receipt %}
+                    <div class="mb-2">
+                        <a href="{{ transaction.receipt.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-file-alt me-1"></i> View Current Receipt
+                        </a>
+                    </div>
+                {% endif %}
+                {{ form.receipt }}
+                {% if form.receipt.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.receipt.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'transaction_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Transaction</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const transactionTypeSelect = document.getElementById('transaction_type');
+        const incomeSourceContainer = document.getElementById('income_source_container');
+        const expenseCategoryContainer = document.getElementById('expense_category_container');
+        
+        function updateFieldsVisibility() {
+            if (transactionTypeSelect.value === 'income') {
+                incomeSourceContainer.style.display = 'block';
+                expenseCategoryContainer.style.display = 'none';
+            } else if (transactionTypeSelect.value === 'expense') {
+                incomeSourceContainer.style.display = 'none';
+                expenseCategoryContainer.style.display = 'block';
+            } else {
+                incomeSourceContainer.style.display = 'block';
+                expenseCategoryContainer.style.display = 'block';
+            }
+        }
+        
+        // Initial update
+        updateFieldsVisibility();
+        
+        // Event listener for changes
+        transactionTypeSelect.addEventListener('change', updateFieldsVisibility);
+    });
+</script>
+{% endblock %} 
